@@ -1,0 +1,566 @@
+CCS PCH C Compiler, Version 4.074, 38112               28-mai-17 12:23
+
+               Filename: main.lst
+
+               ROM used: 614 bytes (2%)
+                         Largest free fragment is 32150
+               RAM used: 34 (2%) at main() level
+                         42 (3%) worst case
+               Stack:    4 worst case (2 in main + 2 for interrupts)
+
+*
+0000:  GOTO   01C2
+*
+0008:  MOVWF  05
+000A:  MOVFF  FD8,06
+000E:  MOVFF  FE0,07
+0012:  MOVLB  0
+0014:  MOVFF  FE9,0D
+0018:  MOVFF  FEA,08
+001C:  MOVFF  FE1,09
+0020:  MOVFF  FE2,0A
+0024:  MOVFF  FD9,0B
+0028:  MOVFF  FDA,0C
+002C:  MOVFF  FF3,14
+0030:  MOVFF  FF4,15
+0034:  MOVFF  FFA,16
+0038:  MOVFF  00,0F
+003C:  MOVFF  01,10
+0040:  MOVFF  02,11
+0044:  MOVFF  03,12
+0048:  MOVFF  04,13
+004C:  BTFSS  FF2.5
+004E:  GOTO   0058
+0052:  BTFSC  FF2.2
+0054:  GOTO   00E6
+0058:  MOVFF  0F,00
+005C:  MOVFF  10,01
+0060:  MOVFF  11,02
+0064:  MOVFF  12,03
+0068:  MOVFF  13,04
+006C:  BSF    0E.7
+006E:  MOVFF  0D,FE9
+0072:  MOVFF  08,FEA
+0076:  MOVFF  09,FE1
+007A:  MOVFF  0A,FE2
+007E:  MOVFF  0B,FD9
+0082:  MOVFF  0C,FDA
+0086:  MOVFF  14,FF3
+008A:  MOVFF  15,FF4
+008E:  MOVFF  16,FFA
+0092:  MOVF   05,W
+0094:  MOVFF  07,FE0
+0098:  MOVFF  06,FD8
+009C:  RETFIE 0
+.................... /*=============================================================================================================================================== 
+.................... PAINEL DE BOT’ES+LED CJATO 
+.................... PROGRAMADOR: LUCIANO BELLARMINO	 
+....................  
+.................... DESCRITIVO: 
+.................... Modos de funcionamento: 
+.................... 1.	Acender um LED por vez aleatoriamente; 
+.................... 2.	Acender dois LED por vez aleatoriamente; 
+.................... 3.	Aumentar progressivamente a quantidade de LED que acendem a cada ciclo atÈ que todo painel esteja iluminado; 
+.................... 4.	Acender um LED por vez aleatoriamente com limite de tempo por ciclo (ajustado via potenciÙmetro). AvanÁa para prÛximo ciclo ao pressionar o 
+.................... bot„o correto ou atingir o tempo predefinido. Considerar contador de acertos com dois dÌgitos (0-99); 
+.................... 5.	Jogo da memÛria. LED acende por determinado tempo e apaga. Sistema aguarda que usu·rio pressione os botıes corretos para avanÁar para prÛximo 
+.................... ciclo. Ao pressionar bot„o correto LED volta a acender e ao errar a sirene È acionada; 
+.................... CICLO: perÌodo entre acender o LED e o usu·rio pressionar todos os botıes corretamente ou o tempo limite ser atingido (caso aplic·vel). 
+....................  
+....................  
+.................... **HIST”RICO** 
+.................... V1.0.0		Data: Abril de 2017 
+.................... - Vers„o inicial. 
+.................... ===============================================================================================================================================*/ 
+.................... #include <18F4520.h>	//Inclui header do ucontrolador utilizado 
+.................... //////// Standard Header file for the PIC18F4520 device //////////////// 
+.................... #device PIC18F4520 
+.................... #list 
+....................  
+....................  
+....................  
+.................... /*=============================================================================================================================================== 
+.................... DEFINI«’ES 
+.................... ===============================================================================================================================================*/ 
+.................... #define IW_TEMPO		PIN_A0		//Entrada analogica de referencia de tempo 
+.................... #define	IX_MODO			PIN_A1		//Bot„o de seleÁ„o do modo 
+.................... #define	QX_H7SU			PIN_A2		//HabilitaÁ„o do display de 7 segmentos das unidades 
+.................... #define	QX_H7SD			PIN_A3		//HabilitaÁ„o do display de 7 segmentos das dezenas 
+.................... #define	QX_H7SM			PIN_A4		//HabilitaÁ„o do display de 7 segmentos do modo 
+.................... #define QX_SIR			PIN_A7		//Sirene 
+....................  
+.................... #define	QX_7S1			PIN_B0		//Segmento 1 
+.................... #define	QX_7S2			PIN_B1		//Segmento 2 
+.................... #define	QX_7S3			PIN_B2		//Segmento 3 
+.................... #define	QX_7S4			PIN_B3		//Segmento 4 
+.................... #define	QX_7S5			PIN_B4		//Segmento 5 
+.................... #define	QX_7S6			PIN_B5		//Segmento 6 
+.................... #define	QX_7S7			PIN_B6		//Segmento 7 
+.................... #define	QX_7SPD			PIN_B7		//Ponto decimal 
+....................  
+.................... #define IX_BNT1			PIN_C0		//Bot„o 1 
+.................... #define IX_BNT2			PIN_C1		//Bot„o 2 
+.................... #define IX_BNT3			PIN_C2		//Bot„o 3 
+.................... #define IX_BNT4			PIN_C3		//Bot„o 4 
+.................... #define IX_BNT5			PIN_C4		//Bot„o 5 
+.................... #define IX_BNT6			PIN_C5		//Bot„o 6 
+.................... #define IX_BNT7			PIN_C6		//Bot„o 7 
+.................... #define IX_BNT8			PIN_C7		//Bot„o 8 
+.................... #define IX_BNT9			PIN_C8		//Bot„o 9 
+.................... #define IX_BNT10		PIN_C9		//Bot„o 10 
+.................... #define IX_BNT11		PIN_C10		//Bot„o 11 
+.................... #define IX_BNT12		PIN_C11		//Bot„o 12 
+.................... #define IX_BNT13		PIN_C12		//Bot„o 13 
+.................... #define IX_BNT14		PIN_C13		//Bot„o 14 
+.................... #define IX_BNT15		PIN_C14		//Bot„o 15 
+.................... #define IX_BNT16		PIN_C15		//Bot„o 16 
+.................... #define IX_BNT17		PIN_C16		//Bot„o 17 
+.................... #define IX_BNT18		PIN_C17		//Bot„o 18 
+.................... #define IX_BNT19		PIN_C18		//Bot„o 19 
+.................... #define IX_BNT20		PIN_C20		//Bot„o 20 
+....................  
+.................... #define QX_LED1			PIN_C0		//Led 1 
+.................... #define QX_LED2			PIN_C1		//Led 2 
+.................... #define QX_LED3			PIN_C2		//Led 3 
+.................... #define QX_LED4			PIN_C3		//Led 4 
+.................... #define QX_LED5			PIN_C4		//Led 5 
+.................... #define QX_LED6			PIN_C5		//Led 6 
+.................... #define QX_LED7			PIN_C6		//Led 7 
+.................... #define QX_LED8			PIN_C7		//Led 8 
+.................... #define QX_LED9			PIN_C8		//Led 9 
+.................... #define QX_LED10		PIN_C9		//Led 10 
+.................... #define QX_LED11		PIN_C10		//Led 11 
+.................... #define QX_LED12		PIN_C11		//Led 12 
+.................... #define QX_LED13		PIN_C12		//Led 13 
+.................... #define QX_LED14		PIN_C13		//Led 14 
+.................... #define QX_LED15		PIN_C14		//Led 15 
+.................... #define QX_LED16		PIN_C15		//Led 16 
+.................... #define QX_LED17		PIN_C16		//Led 17 
+.................... #define QX_LED18		PIN_C17		//Led 18 
+.................... #define QX_LED19		PIN_C18		//Led 19 
+.................... #define QX_LED20		PIN_C20		//Led 20 
+....................  
+.................... /*=============================================================================================================================================== 
+.................... CONFIGURA«’ES 
+.................... ===============================================================================================================================================*/ 
+.................... #use delay (clock=8M)			//Informa ‡ funÁ„o delay que o clock do oscilador È de 8MHz 
+.................... #fuses INTRC					//Define oscilador interno 
+.................... #fuses NOMCLR					//Desabilita o reset externo do uControlador 
+....................  
+....................  
+.................... /*=============================================================================================================================================== 
+.................... BIBLIOTECAS 
+.................... ===============================================================================================================================================*/ 
+.................... #include <Transicao.h> 
+.................... /*=============================================================================================================================================== 
+.................... DECLARA«√O DAS VARI¡ÅVEIS 
+.................... ===============================================================================================================================================*/ 
+.................... //STATIC		SINAL		TIPO	VARI¡ÅVEL				VALOR INICIAL		COMENT¡RIO 
+.................... //----------------------------------------------------------------------------------------------------------------------------------------------- 
+.................... 							boolean	MX_PLSP_AUX				=0;					//Vari·vel auxiliar para funÁ„o plsp 
+.................... 							boolean	MX_PLSP_OUT				=0;					//Vari·vel de saida para funÁ„o plsp 
+....................  
+.................... 	 
+.................... /*=============================================================================================================================================== 
+.................... FLANCO POSITIVO 
+.................... ===============================================================================================================================================*/ 
+.................... //Esta funÁ„o verifica a transiÁ„o positiva de um bit 
+.................... plsp(in) 
+.................... { 
+.................... 	if(in)							//Verifica se a entrada foi acionada 
+.................... 	{ 
+.................... 		if(!MX_PLSP_AUX)			//Verifica se j· estava acionada na ultima verificaÁ„o 
+.................... 		{ 
+.................... 			MX_PLSP_OUT=TRUE;		//Se n„o, aciona saÌda e marcador auxiliar 
+.................... 			MX_PLSP_AUX=TRUE;		// 
+.................... 		} 
+.................... 		else MX_PLSP_OUT=FALSE;		//Se sim, desliga saÌda 
+.................... 	} 
+.................... 	else 
+.................... 	{ 
+.................... 		MX_PLSP_OUT=FALSE;			//Se entrada n„o esta acionada, reseta saida e marcador auxiliar 
+.................... 		MX_PLSP_AUX=FALSE;			// 
+.................... 	} 
+.................... 	return(MX_PLSP_OUT);			//Retorna valor 
+.................... } 
+....................  
+.................... #include <eeprom.h> 
+.................... /*=============================================================================================================================================== 
+.................... DECLARA«√O DAS VARI¡ÅVEIS 
+.................... ===============================================================================================================================================*/ 
+.................... //STATIC		SINAL		TIPO	VARI¡ÅVEL				VALOR INICIAL		COMENT¡RIO 
+.................... //----------------------------------------------------------------------------------------------------------------------------------------------- 
+....................  
+....................  
+.................... /*=============================================================================================================================================== 
+.................... SALVAR WORD NA EEPROM 
+.................... ===============================================================================================================================================*/ 
+.................... void write_eeprom_word(endereco,int16 valor) 
+.................... { 
+.................... 	write_eeprom(endereco, valor/256);		//Salva parte alta na eeprom (o quociente da divis„o por 256 retorna a parte alta da word) 
+.................... 	write_eeprom(endereco+1, valor%256);	//Salva parte baixa na eeprom (o resto da divis„o por 256 retorna a parte baixa da word) 
+.................... 	 
+.................... 	return; 
+.................... }			 
+....................  
+.................... /*=============================================================================================================================================== 
+.................... LER WORD DA EEPROM 
+.................... ===============================================================================================================================================*/ 
+.................... int16 read_eeprom_word(endereco) 
+.................... { 
+.................... 	return(read_eeprom(endereco)*256+read_eeprom(endereco+1));	//Para retornar o valor de uma word da eeprom (2 bytes consecutivos, le-se a parte alta 
+012A:  MOVFF  FF2,22
+012E:  BCF    FF2.7
+0130:  MOVFF  21,FA9
+0134:  BCF    FA6.6
+0136:  BCF    FA6.7
+0138:  BSF    FA6.0
+013A:  MOVF   FA8,W
+013C:  BTFSC  22.7
+013E:  BSF    FF2.7
+0140:  MOVWF  24
+0142:  CLRF   26
+0144:  MOVFF  24,25
+0148:  MOVLW  01
+014A:  MOVWF  28
+014C:  CLRF   27
+014E:  BRA    010A
+0150:  MOVFF  02,26
+0154:  MOVFF  01,25
+0158:  MOVLW  01
+015A:  ADDWF  21,W
+015C:  MOVWF  27
+015E:  MOVFF  FF2,28
+0162:  BCF    FF2.7
+0164:  MOVFF  27,FA9
+0168:  BCF    FA6.6
+016A:  BCF    FA6.7
+016C:  BSF    FA6.0
+016E:  MOVF   FA8,W
+0170:  BTFSC  28.7
+0172:  BSF    FF2.7
+0174:  ADDWF  25,W
+0176:  MOVWF  01
+0178:  MOVLW  00
+017A:  ADDWFC 26,W
+017C:  MOVWF  03
+017E:  MOVF   01,W
+0180:  MOVWF  01
+0182:  MOVF   03,W
+0184:  MOVWF  02
+.................... 													//multiplica-se por 256 e ent„o soma-se a parte baixa 
+.................... } 
+0186:  GOTO   020E (RETURN)
+....................  
+....................  
+.................... /*=============================================================================================================================================== 
+.................... DECLARA«√O DAS VARI¡VEIS 
+.................... ===============================================================================================================================================*/ 
+.................... //STATIC		SINAL		TIPO	VARI¡VEL				VALOR INICIAL	E≤PROM		COMENT¡RIO 
+.................... //----------------------------------------------------------------------------------------------------------------------------------------------- 
+.................... 				unsigned	int8	MB_Modo					=0;						//Modo de trabalho 
+.................... 				unsigned	int8	MB_ModoAux				=0;						//Vari·vel auxiliar para verificar alteraÁ„o no modo 
+.................... 							boolean	MX_ModoAux				=0;						//VAri·vel auxiliar para verificar flanco na entrada modo 
+.................... 				unsigned	int16	MW_TmrDisplay			=0;						//Efetivo do temporizador para atualizaÁ„o do display 
+.................... 				unsigned	int8	MB_7SU					=0;						//Valor da unidade a ser exibida no display 
+.................... 				unsigned	int8	MB_7SD					=0;						//Valor da dezena a ser exibida no display 
+.................... 				unsigned	int8	MB_7S_Digito			=0;						//Digito do display 7 segmentos a ser atualizado 
+.................... 				unsigned	int8	MB_CntAcertos			=0;						//Contador de acertos 
+.................... 				 
+.................... /*=============================================================================================================================================== 
+.................... FUN«’ES 
+.................... ===============================================================================================================================================*/ 
+....................  
+....................  
+.................... /*=============================================================================================================================================== 
+.................... SUBROTINAS 
+.................... ===============================================================================================================================================*/ 
+.................... //ATUALIZA DISPLAY DE 7 SEGMENTOS 
+.................... void DisplayVarredura() 
+.................... { 
+.................... 	switch(MB_7S_Digito) 
+.................... 	{ 
+*
+009E:  MOVF   1F,W
+00A0:  XORLW  00
+00A2:  BZ    00AE
+00A4:  XORLW  01
+00A6:  BZ    00BC
+00A8:  XORLW  02
+00AA:  BZ    00CA
+00AC:  BRA    00D8
+.................... 		case 0: 
+.................... 		output_high(QX_H7SU); 
+00AE:  BCF    F92.2
+00B0:  BSF    F89.2
+.................... 		output_low(QX_H7SD); 
+00B2:  BCF    F92.3
+00B4:  BCF    F89.3
+.................... 		output_low(QX_H7SM); 
+00B6:  BCF    F92.4
+00B8:  BCF    F89.4
+.................... 		break; 
+00BA:  BRA    00D8
+.................... 		 
+.................... 		case 1: 
+.................... 		output_low(QX_H7SU); 
+00BC:  BCF    F92.2
+00BE:  BCF    F89.2
+.................... 		output_high(QX_H7SD); 
+00C0:  BCF    F92.3
+00C2:  BSF    F89.3
+.................... 		output_low(QX_H7SM); 
+00C4:  BCF    F92.4
+00C6:  BCF    F89.4
+.................... 		break; 
+00C8:  BRA    00D8
+.................... 		 
+.................... 		case 3: 
+.................... 		output_low(QX_H7SU); 
+00CA:  BCF    F92.2
+00CC:  BCF    F89.2
+.................... 		output_low(QX_H7SD); 
+00CE:  BCF    F92.3
+00D0:  BCF    F89.3
+.................... 		output_high(QX_H7SM); 
+00D2:  BCF    F92.4
+00D4:  BSF    F89.4
+.................... 		break; 
+00D6:  BRA    00D8
+.................... 	} 
+.................... 	MB_7S_Digito++;						//Apos atualizaÁ„o incrementa digito para proxima atualizaÁ„o 
+00D8:  INCF   1F,F
+.................... 	if(MB_7S_Digito>3) MB_7S_Digito=0;	//Limita incremento do digito em 3	 
+00DA:  MOVF   1F,W
+00DC:  SUBLW  03
+00DE:  BTFSS  FD8.0
+00E0:  CLRF   1F
+.................... } 
+00E2:  GOTO   0104 (RETURN)
+....................  
+.................... //SALVA VALORES RETENTIVOS NA EEPROM NA TRANSI«√O DE TELAS CASO TENHAM SIDO ALTERADOS 
+.................... void Eeprom() 
+.................... { 
+.................... 	if(MB_ModoAux!=MB_Modo) 
+*
+018A:  MOVF   19,W
+018C:  SUBWF  1A,W
+018E:  BZ    01BC
+.................... 	{ 
+.................... 		MB_ModoAux=MB_Modo; 
+0190:  MOVFF  19,1A
+.................... 		write_eeprom(0, MB_Modo); 
+0194:  CLRF   FA9
+0196:  MOVFF  19,FA8
+019A:  BCF    FA6.6
+019C:  BCF    FA6.7
+019E:  BSF    FA6.2
+01A0:  MOVFF  FF2,00
+01A4:  BCF    FF2.7
+01A6:  MOVLB  F
+01A8:  MOVLW  55
+01AA:  MOVWF  FA7
+01AC:  MOVLW  AA
+01AE:  MOVWF  FA7
+01B0:  BSF    FA6.1
+01B2:  BTFSC  FA6.1
+01B4:  BRA    01B2
+01B6:  BCF    FA6.2
+01B8:  MOVF   00,W
+01BA:  IORWF  FF2,F
+01BC:  MOVLB  0
+.................... 	}	 
+....................  
+.................... } 
+01BE:  GOTO   0218 (RETURN)
+....................  
+.................... /*=============================================================================================================================================== 
+.................... INTERRUP«’ES 
+.................... ===============================================================================================================================================*/ 
+.................... //TIMER 0 - Esta interrupÁ„o ser· executada conforme ajustado no setup_timer_0 
+.................... #int_timer0 
+.................... void timer_zero() 
+.................... { 
+.................... 	set_timer0(60536);		//Seta Timer 0 em 60536 para que ocorra apenas 50000 contagens atÈ a proxima interrupÁ„o que ocorre em 65536 
+*
+00E6:  MOVLW  EC
+00E8:  MOVWF  FD7
+00EA:  MOVLW  78
+00EC:  MOVWF  FD6
+.................... 							//fazendo com que decorra 0,01s 
+.................... 	 
+.................... 	//Timer para atualizaÁ„o do display de 7 segmentos 
+.................... 	//20ms 
+.................... 	MW_TmrDisplay++; 
+00EE:  INCF   1B,F
+00F0:  BTFSC  FD8.2
+00F2:  INCF   1C,F
+.................... 	if(MW_TmrDisplay==2) 
+00F4:  MOVF   1B,W
+00F6:  SUBLW  02
+00F8:  BNZ   0104
+00FA:  MOVF   1C,F
+00FC:  BNZ   0104
+.................... 	{ 
+.................... 		MW_TmrDisplay=0; 
+00FE:  CLRF   1C
+0100:  CLRF   1B
+.................... 		DisplayVarredura(); 
+0102:  BRA    009E
+.................... 	}	 
+.................... 	 
+.................... } 
+.................... 	 
+.................... /*=============================================================================================================================================== 
+.................... ROTINA PRINCIPAL 
+.................... ===============================================================================================================================================*/ 
+0104:  BCF    FF2.2
+0106:  GOTO   0058
+.................... void main() 
+.................... { 
+*
+01C2:  CLRF   FF8
+01C4:  BCF    FD0.7
+01C6:  BSF    0D.7
+01C8:  CLRF   FEA
+01CA:  CLRF   FE9
+01CC:  MOVF   FC1,W
+01CE:  ANDLW  C0
+01D0:  IORLW  0F
+01D2:  MOVWF  FC1
+01D4:  MOVLW  07
+01D6:  MOVWF  FB4
+01D8:  BCF    18.0
+01DA:  BCF    18.1
+01DC:  CLRF   19
+01DE:  CLRF   1A
+01E0:  BCF    18.2
+01E2:  CLRF   1B
+01E4:  CLRF   1C
+01E6:  CLRF   1D
+01E8:  CLRF   1E
+01EA:  CLRF   1F
+01EC:  CLRF   20
+.................... 	//CONFIGURA«√O DO OSCILADOR 
+.................... 	setup_oscillator(OSC_8MHZ);		//Determina que o clock do oscilador interno ser· de 8MHz 
+01EE:  MOVLW  70
+01F0:  MOVWF  FD3
+01F2:  MOVF   FD3,W
+....................  
+.................... 	//CONFIGURA«√O DO TIMER 0 E DA INTERRUP«√O POR TEMPO 
+.................... 	enable_interrupts(GLOBAL);								//Habilita interrupÁıes globais 
+01F4:  MOVLW  C0
+01F6:  IORWF  FF2,F
+.................... 	enable_interrupts(INT_TIMER0);							//Habilita interrupÁ„o pelo TIMER 0 
+01F8:  BSF    FF2.5
+.................... 	setup_timer_0 (RTCC_DIV_4|RTCC_INTERNAL);				//Prescaler:4 / Clock Interno / 16bits	(INC a cada 2us / InterrupÁ„o a cada 0,1s 
+01FA:  MOVLW  81
+01FC:  MOVWF  FD5
+.................... 	set_timer0(60536); 										//Seta Timer 0 em 60536 para que ocorra apenas 5000 contagens atÈ a proxima 
+01FE:  MOVLW  EC
+0200:  MOVWF  FD7
+0202:  MOVLW  78
+0204:  MOVWF  FD6
+.................... 															//interrupÁ„o que ocorre em 65536 e assim esta ocorra em 0,01s como desejado	 
+.................... 	 
+.................... 	//CONFIGURA«√O DO TIMER 1 
+.................... 	setup_timer_1 (T1_DIV_BY_4|T1_INTERNAL);				//Prescaler:4 / Clock Interno / 16bits	(INC a cada 2us / InterrupÁ„o a cada 0,1s 
+0206:  MOVLW  A5
+0208:  MOVWF  FCD
+.................... 	 
+.................... 	//CARREGA VALORES RETENTIVOS DA EEPROM 
+.................... 	MB_MODO=read_eeprom_word(0); 
+020A:  CLRF   21
+020C:  BRA    012A
+020E:  MOVFF  01,19
+.................... 	MB_ModoAux=MB_Modo; 
+0212:  MOVFF  19,1A
+.................... 	 
+.................... 	while(true)		//LaÁo infinito pra execuÁ„o ciclica do programa 
+.................... 	{	 
+.................... 		Eeprom();		//Salva valores na eeprom 
+0216:  BRA    018A
+.................... 	 
+.................... 	//MODO DE FUNCIONAMENTO 
+.................... 	//---------------------	 
+.................... 		if(input(IX_MODO)) 
+0218:  BSF    F92.1
+021A:  BTFSS  F80.1
+021C:  BRA    023E
+.................... 		{ 
+.................... 			if(input(IX_MODO)!=MX_ModoAux) 
+021E:  BSF    F92.1
+0220:  MOVLW  00
+0222:  BTFSC  F80.1
+0224:  MOVLW  01
+0226:  MOVWF  21
+0228:  MOVLW  00
+022A:  BTFSC  18.2
+022C:  MOVLW  01
+022E:  SUBWF  21,W
+0230:  BZ    023C
+.................... 			{ 
+.................... 				MX_ModoAux=input(IX_MODO); 
+0232:  BSF    F92.1
+0234:  BCF    18.2
+0236:  BTFSC  F80.1
+0238:  BSF    18.2
+.................... 				MB_Modo++; 
+023A:  INCF   19,F
+.................... 			} 
+.................... 		} 
+.................... 		else MX_ModoAux=0;		 
+023C:  BRA    0240
+023E:  BCF    18.2
+.................... 		 
+.................... 		switch(MB_Modo)	//Verifica o modo de funcionamento e roda a rotina desejada 
+.................... 		{ 
+0240:  MOVF   19,W
+0242:  XORLW  01
+0244:  BZ    0258
+0246:  XORLW  03
+0248:  BZ    025A
+024A:  XORLW  01
+024C:  BZ    025C
+024E:  XORLW  07
+0250:  BZ    025E
+0252:  XORLW  01
+0254:  BZ    0260
+0256:  BRA    0262
+.................... 			case 1:		//Um led por vez aleatoriamente 
+.................... 			break; 
+0258:  BRA    0266
+.................... 			 
+.................... 			case 2:		//Dois led por vez aleatoriamente 
+.................... 			break; 
+025A:  BRA    0266
+.................... 			 
+.................... 			case 3:		//Aumentar progressivamente a quantidade de LED que acendem a cada ciclo atÈ que todo painel esteja iluminado 
+.................... 			break; 
+025C:  BRA    0266
+.................... 			 
+.................... 			case 4:		//Acender um LED por vez aleatoriamente com limite de tempo por ciclo  
+.................... 			break; 
+025E:  BRA    0266
+.................... 			 
+.................... 			case 5:		//Jogo da memoria 
+.................... 			break; 
+0260:  BRA    0266
+.................... 			 
+.................... 			default: MB_Modo=1; 
+0262:  MOVLW  01
+0264:  MOVWF  19
+.................... 		}	 
+.................... 	} 
+0266:  BRA    0216
+.................... } 
+0268:  SLEEP 
+
+Configuration Fuses:
+   Word  1: 0900   NOIESO NOFCMEN INTRC
+   Word  2: 1E1E   BROWNOUT NOWDT BORV20 PUT WDT32768
+   Word  3: 0300   PBADEN CCP2C1 NOLPT1OSC NOMCLR RESERVED
+   Word  4: 0081   STVREN NODEBUG NOLVP NOXINST RESERVED
+   Word  5: C00F   NOPROTECT NOCPD NOCPB
+   Word  6: E00F   NOWRT NOWRTD NOWRTC NOWRTB
+   Word  7: 400F   NOEBTR NOEBTRB

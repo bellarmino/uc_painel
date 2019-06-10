@@ -1,0 +1,8 @@
+ÀÄmain
+   ÃÄMAIN  0/168  Ram=1
+   ³  ÃÄ??0??
+   ³  ÃÄread_eeprom_word  0/96  Ram=8
+   ³  ³  ÀÄ@MUL1616  0/32  Ram=5
+   ³  ÀÄEeprom  0/56  Ram=0
+   ÀÄtimer_zero  0/36  Ram=0
+      ÀÄDisplayVarredura  0/72  Ram=0

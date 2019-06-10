@@ -1,0 +1,51 @@
+
+ROM used: 614 (2%)
+          614 (2%) including unused fragments
+
+          1 Average locations per line
+          9 Average locations per statement
+
+RAM used: 34 (2%) at main() level
+          42 (3%) worst case
+
+Stack used: 4 worst case (out of 29 total available)
+
+Lines Stmts  %   Files
+----- ----- ---  -----
+  239    51  77  main.c
+  438     0   0  C:\Program Files (x86)\PICC\devices\18F4520.h
+   32    11  17  Transicao.h
+   27     4   6  eeprom.h
+----- -----
+  736    66 Total
+
+Page ROM  %  RAM   Vol Diff  Functions:
+---- --- --- ---   --- ----  ----------
+0     96   8   8    66  2.3  read_eeprom_word
+0     32   3   5             @MUL1616
+0     72   6   0   367  5.1  DisplayVarredura
+0     56   5   0    72  2.7  Eeprom
+0     36   3   0    90  2.8  timer_zero
+0    168  14   1   642  7.1  MAIN
+
+Program metrics:
+    Functions               5
+    Statements              66
+    Comments                297
+    Volume (V)              1697
+    Difficilty (D)          20.5
+    Effort to implement (E) 34733
+    Time to implement (T)   32 minutes
+    Est Delivered Bugs (B)  0
+    Cyclomatic Complexity   14
+    Maintainability (MI)    69
+
+ Segment     Used  Free
+-----------  ----  ----
+00000-00002     4  0  
+00004-00006     0  4  
+00008-0009C   150  0  
+0009E-07FFE   460  32150  
+
+
+
